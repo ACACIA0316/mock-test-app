@@ -2228,6 +2228,7 @@ var _PRICING = {
   'claude-opus-4-8':         { input: 15.00, output: 75.00 },
   'claude-haiku-4-5-20251001':{ input:  0.80, output:  4.00 },
   'gemini-2.5-pro':          { input:  1.25, output: 10.00 },
+  'gemini-3-flash':          { input:  0.50, output:  3.00 },
   'gemini-2.5-flash':        { input:  0.30, output:  2.50 },
   'gpt-4.5':                 { input: 75.00, output:150.00 },
   'gpt-4o':                  { input:  2.50, output: 10.00 },
@@ -6965,6 +6966,7 @@ function makeCfgBlock(type, id) {
     <option value="claude-opus-4-8">Claude Opus 4.8</option>
     <option value="claude-opus-4-6">Claude Opus 4.6</option>
     <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+    <option value="gemini-3-flash">Gemini 3 Flash</option>
     <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
     <option value="gpt-4o">GPT-4o</option>
     <option value="deepseek-chat">DeepSeek V3</option>
@@ -6974,6 +6976,7 @@ function makeCfgBlock(type, id) {
     <option value="claude-opus-4-8">Claude Opus 4.8</option>
     <option value="claude-opus-4-6">Claude Opus 4.6</option>
     <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+    <option value="gemini-3-flash">Gemini 3 Flash</option>
     <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
     <option value="gpt-4o">GPT-4o</option>
     <option value="deepseek-chat">DeepSeek V3</option>
@@ -11921,6 +11924,7 @@ var _SYN_PRICES = {
   'claude-opus-4-6':   { i: 15,    o: 75   },
   'claude-opus-4-8':   { i: 15,    o: 75   },
   'gemini-2.5-pro':    { i: 1.25,  o: 10   },
+  'gemini-3-flash':    { i: 0.50,  o: 3.00 },
   'gemini-2.5-flash':  { i: 0.30,  o: 2.50 },
   'gpt-4o':            { i: 2.5,   o: 10   },
   'deepseek-chat':     { i: 0.14,  o: 0.28 },
