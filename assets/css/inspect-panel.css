@@ -1,0 +1,27 @@
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 18px;border-radius:8px;font-size:12px;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+/* 개선사항 패널 */
+#inspect-panel{position:fixed;top:0;right:0;width:500px;height:100vh;background:#fff;border-left:1px solid var(--bdr);box-shadow:-6px 0 32px rgba(0,0,0,.12);z-index:500;overflow-y:auto;display:none;flex-direction:column}
+.isp-hd{padding:13px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;background:var(--bg);position:sticky;top:0;z-index:1}
+.isp-title{font-size:14px;font-weight:700;flex:1}
+.isp-close{border:none;background:none;font-size:20px;cursor:pointer;color:#9CA3AF;line-height:1;padding:0}
+.isp-close:hover{color:#374151}
+.isp-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.isp-loading{text-align:center;padding:60px 20px;color:#6B7280}
+.isp-score-box{background:var(--grn-lt);border:1px solid var(--grn-bd);border-radius:10px;padding:12px 14px}
+.isp-score-num{font-size:28px;font-weight:800;color:var(--grn)}
+.isp-summary{font-size:11px;color:#064E3B;line-height:1.65;margin-top:5px}
+.isp-section-lbl{font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:.08em}
+.imp-card{border:1px solid var(--bdr);border-radius:10px;overflow:hidden}
+.imp-head{padding:9px 12px;background:var(--bg);border-bottom:1px solid var(--bdr);display:flex;align-items:flex-start;gap:7px}
+.imp-sev{font-size:9px;padding:2px 7px;border-radius:99px;color:#fff;font-weight:700;white-space:nowrap;margin-top:2px}
+.imp-sev.high{background:#EF4444}.imp-sev.medium{background:#F59E0B}.imp-sev.low{background:#10B981}
+.imp-pattern{font-size:11px;font-weight:600;color:#111827;flex:1;line-height:1.4}
+.imp-body{padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.imp-meta{font-size:10px;color:#6B7280;line-height:1.7}
+.imp-meta b{color:#374151}
+.imp-code{font-size:10px;color:#374151;background:#F3F4F6;border-radius:6px;padding:8px 10px;white-space:pre-wrap;font-family:monospace;line-height:1.6;max-height:150px;overflow-y:auto;border:1px solid var(--bdr)}
+.imp-rationale{font-size:10px;color:#6B7280;font-style:italic;line-height:1.5}
+.imp-apply-btn{padding:7px 16px;border-radius:8px;background:var(--purp);color:#fff;font-size:11px;font-weight:600;border:none;cursor:pointer;align-self:flex-end;transition:background .15s}
+.imp-apply-btn:hover{background:#6D28D9}.imp-apply-btn:disabled{cursor:not-allowed}
+.imp-apply-btn.done{background:var(--grn)}.imp-apply-btn.err{background:#EF4444}

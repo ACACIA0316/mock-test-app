@@ -1,0 +1,53 @@
+.passage-body{padding:12px 16px}
+.passage-q-item{margin-bottom:6px;border:1px solid var(--bdr);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color .12s,box-shadow .12s}
+.passage-q-item:hover{border-color:var(--blue-bd)}
+.passage-q-item.active{border-color:var(--blue);box-shadow:0 0 0 2px rgba(37,99,235,.12)}
+.passage-q-item.st-done{border-color:var(--grn-bd)}
+.passage-q-item.st-error{border-color:#FCA5A5}
+.passage-q-item.st-processing{border-color:var(--blue-bd)}
+.pq-head{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bg)}
+.pq-num{font-size:11px;font-weight:700;color:#374151;min-width:18px}
+.pq-preview{font-size:10px;color:#9CA3AF;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:130px}
+.pq-status{font-size:9px;padding:2px 6px;border-radius:99px;white-space:nowrap;border:1px solid transparent}
+.pq-status.idle{background:#F3F4F6;color:#9CA3AF}
+.pq-status.ready{background:var(--blue-lt);color:var(--blue);border-color:var(--blue-bd)}
+.pq-status.processing{background:var(--blue-lt);color:var(--blue);border-color:var(--blue-bd)}
+.pq-status.done{background:var(--grn-lt);color:var(--grn);border-color:var(--grn-bd)}
+.pq-status.error{background:#FEF2F2;color:#EF4444;border-color:#FCA5A5}
+.pq-del{font-size:13px;color:#D1D5DB;cursor:pointer;background:none;border:none;line-height:1;padding:0 3px}
+.pq-del:hover{color:#EF4444}
+.prog-row{display:flex;align-items:center;gap:8px;font-size:11px;padding:4px 0;border-bottom:1px solid #F3F4F6}
+.prog-row:last-child{border-bottom:none}
+.prog-type{color:#6B7280;min-width:90px;white-space:nowrap}
+.prog-step{font-weight:500}
+.prog-done{color:var(--grn)}
+.prog-err{color:#EF4444}
+.gp-box{margin-top:10px;padding:11px 13px;background:var(--blue-lt);border:1px solid var(--blue-bd);border-radius:12px;display:none;flex-direction:column;gap:7px}
+.gp-box.done{background:var(--grn-lt);border-color:var(--grn-bd)}
+.gp-top{display:flex;justify-content:space-between;align-items:baseline}
+.gp-count{font-size:14px;font-weight:700;color:#1D4ED8;font-variant-numeric:tabular-nums}
+.gp-box.done .gp-count{color:var(--grn)}
+.gp-time{font-size:11px;color:#3B82F6;font-variant-numeric:tabular-nums}
+.gp-box.done .gp-time{color:var(--grn)}
+.gp-track{background:#BFDBFE;border-radius:99px;height:8px;overflow:hidden}
+.gp-box.done .gp-track{background:var(--grn-bd)}
+.gp-fill{height:100%;border-radius:99px;width:0%;transition:width .4s ease;background:linear-gradient(90deg,#60A5FA,#2563EB)}
+.gp-box.done .gp-fill{background:linear-gradient(90deg,#34D399,#059669)}
+.gp-label{font-size:10px;color:#6B7280;text-align:center}
+.gp-cost{font-size:9.5px;color:#4B5563;border-top:1px solid #BFDBFE;padding-top:5px;margin-top:2px;display:flex;flex-direction:column;gap:2px}
+.gp-box.done .gp-cost{border-top-color:var(--grn-bd)}
+.gp-cost-row{display:flex;justify-content:space-between;align-items:center;gap:4px}
+.gp-cost-model{color:#6B7280;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px}
+.gp-cost-val{font-variant-numeric:tabular-nums;white-space:nowrap;color:#374151}
+.gp-cost-total{display:flex;justify-content:space-between;align-items:center;border-top:1px dashed #D1D5DB;margin-top:2px;padding-top:2px;font-weight:600;color:#111827}
+/* 멀티 Provider UI */
+.provider-keys{padding:4px 12px 6px;border-bottom:1px solid var(--bdr)}
+.pk-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.pk-name{font-size:10px;font-weight:600;color:#374151}
+.pk-status{font-size:9px;color:#9CA3AF}
+.pk-status.ok{color:var(--grn);font-weight:600}
+.provider-select-body{padding:8px 12px 10px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--bdr)}
+.pv-row{display:flex;align-items:center;gap:8px}
+.pv-label{font-size:10px;color:#9CA3AF;min-width:26px}
+.pv-sel{flex:1;border:1px solid var(--bdr);border-radius:6px;padding:3px 6px;font-size:10px;font-family:inherit;outline:none;color:#111827;background:var(--card);cursor:pointer}
+.pv-sel:focus{border-color:var(--blue-bd)}

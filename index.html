@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>multiple-produce</title>
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/layout.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/chips-badges.css">
+<link rel="stylesheet" href="assets/css/main-tab.css">
+<link rel="stylesheet" href="assets/css/result.css">
+<link rel="stylesheet" href="assets/css/training-tab.css">
+<link rel="stylesheet" href="assets/css/synonym-tab.css">
+<link rel="stylesheet" href="assets/css/blueprint-tab.css">
+<link rel="stylesheet" href="assets/css/inspect-panel.css">
+<script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<div class="title-bar">
+  <h1>multiple-produce<span>다중 지문 순차 출제</span></h1>
+</div>
+
+<div class="tab-nav" role="tablist" aria-label="출제 모드">
+  <button type="button" class="tab-btn active" id="tab-btn-main" role="tab" aria-controls="tab-main" aria-selected="true" aria-label="문제 출제 탭" onclick="switchTab('main')">문제 출제</button>
+  <button type="button" class="tab-btn" id="tab-btn-training" role="tab" aria-controls="tab-training" aria-selected="false" aria-label="기본기 훈련 탭" onclick="switchTab('training')">기본기 훈련</button>
+  <button type="button" class="tab-btn" id="tab-btn-synonym" role="tab" aria-controls="tab-synonym" aria-selected="false" aria-label="유의어 훈련 탭" onclick="switchTab('synonym')">유의어 훈련</button>
+  <button type="button" class="tab-btn" id="tab-btn-blueprint" role="tab" aria-controls="tab-blueprint" aria-selected="false" aria-label="블루프린트 탭" onclick="switchTab('blueprint')">블루프린트</button>
+
+</div>
+
+<div class="layout" id="tab-main" role="tabpanel" aria-labelledby="tab-btn-main">
+
+  <!-- LEFT: 큐 패널 -->
+  <div class="left-panel">
+
+    <div class="card">
+      <div class="card-hd"><span>AI 설정</span></div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">Claude (Anthropic)</span><span class="pk-status" id="api-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off">
+          <button class="api-btn" onclick="saveApiKey()">저장</button>
+          <button class="api-btn del" onclick="clearApiKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('claude','api-key-input','api-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">Gemini (Google)</span><span class="pk-status" id="gemini-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="gemini-key-input" placeholder="AIza..." autocomplete="off">
+          <button class="api-btn" onclick="saveGeminiKey()">저장</button>
+          <button class="api-btn del" onclick="clearGeminiKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('gemini','gemini-key-input','gemini-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">OpenAI (GPT)</span><span class="pk-status" id="openai-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="openai-key-input" placeholder="sk-..." autocomplete="off">
+          <button class="api-btn" onclick="saveOpenAIKey()">저장</button>
+          <button class="api-btn del" onclick="clearOpenAIKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('openai','openai-key-input','openai-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">DeepSeek</span><span class="pk-status" id="deepseek-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="deepseek-key-input" placeholder="sk-..." autocomplete="off">
+          <button class="api-btn" onclick="saveDeepSeekKey()">저장</button>
+          <button class="api-btn del" onclick="clearDeepSeekKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('deepseek','deepseek-key-input','deepseek-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">Fable (claude-fable-5)</span><span class="pk-status" id="fable-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="fable-key-input" placeholder="sk-ant-... (Anthropic 호환)" autocomplete="off">
+          <button class="api-btn" onclick="saveFableKey()">저장</button>
+          <button class="api-btn del" onclick="clearFableKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('fable','fable-key-input','fable-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-select-body">
+        <div class="pv-row">
+          <span class="pv-label">분석</span>
+          <select class="pv-sel" id="pv-analyze">
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+        <div class="pv-row">
+          <span class="pv-label">출제</span>
+          <select class="pv-sel" id="pv-design">
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+        <div class="pv-row">
+          <span class="pv-label">창작문 검수</span>
+          <select class="pv-sel" id="pv-proof">
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+            <option value="none">사용 안 함</option>
+          </select>
+        </div>
+        <div class="pv-row">
+          <span class="pv-label">검수</span>
+          <select class="pv-sel" id="pv-review">
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><span>기본 설정</span><span class="aux">모든 지문 기본값</span></div>
+      <div class="global-body">
+        <div class="p-row">
+          <span class="p-lbl">어휘 난이도</span>
+          <div class="btn-grp" data-global-key="vocab" data-style="b">
+            <button class="ps">01</button><button class="ps">02</button>
+            <button class="ps onb">03</button><button class="ps">04</button>
+          </div>
+        </div>
+        <div class="p-row">
+          <span class="p-lbl">오답 매력도</span>
+          <div class="btn-grp" data-global-key="attr">
+            <button class="ps">하</button><button class="ps on">중</button><button class="ps">상</button><button class="ps" title="지원 유형 전용">최상</button>
+          </div>
+          <span style="margin-left:8px;font-size:10px;color:#7C3AED">최상: 빈칸·제목·주제·함축·요지</span>
+        </div>
+        <div class="p-row" id="global-choice-len-row">
+          <span class="p-lbl">선지길이</span>
+          <div class="btn-grp" data-key="choiceLength" data-global-key="choiceLength">
+            <button class="ps">단</button>
+            <button class="ps on">중</button>
+            <button class="ps">장</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><span>지문 큐</span><span class="aux" id="queue-status">0개</span></div>
+      <div style="padding:8px 12px" id="passage-queue"></div>
+      <div style="padding:0 12px 10px;display:flex;gap:6px">
+        <button type="button" class="add-passage-btn" aria-label="문제 출제 지문 추가" title="지문 추가" onclick="addPassage()">+ 지문 추가</button>
+        <button type="button" class="add-passage-btn" style="background:#1D4ED8;flex:0 0 auto" title="엑셀 파일에서 지문을 일괄 가져오기 (전체 탭 자동 배포)" onclick="document.getElementById('excel-import-input').click()">📥 엑셀 가져오기</button>
+        <input type="file" id="excel-import-input" accept=".xlsx,.xls" style="display:none" onchange="importPassagesFromExcel(this.files[0]);this.value=''">
+      </div>
+    </div>
+
+    <!-- 출제 실행 -->
+    <div class="card">
+      <div class="submit-area">
+        <button class="submit-btn" id="run-btn" onclick="runQueue()">⚡ 전체 일괄 출제</button>
+        <button class="submit-btn" id="stop-btn" onclick="stopQueue()" style="display:none;margin-top:6px;background:#DC2626">⏹ 출제 중단</button>
+        <div class="gp-box" id="gp-box">
+          <div class="gp-top">
+            <span class="gp-count" id="gp-count">0 / 0 지문</span>
+            <span class="gp-time" id="gp-time">0초</span>
+          </div>
+          <div class="gp-track"><div class="gp-fill" id="gp-fill"></div></div>
+          <div class="gp-label" id="gp-label">출제 대기 중</div>
+          <div class="gp-cost" id="gp-cost"></div>
+        </div>
+        <button class="submit-btn" id="word-all-btn" onclick="downloadAllWord()" style="margin-top:8px;background:#059669;display:none">📄 전체 Word 다운로드</button>
+        <button class="submit-btn" id="json-all-btn" onclick="downloadAllJson()" style="margin-top:6px;background:#374151;display:none">{ } 전체 JSON 다운로드</button>
+        <button class="submit-btn" id="json-view-btn" onclick="openJsonView()" style="margin-top:6px;background:#0F766E;display:none">{ } JSON 보기 · 전체 복사</button>
+        <button class="submit-btn" id="inspect-all-btn" onclick="openInspect()" style="margin-top:6px;background:#7C3AED;display:none">🔍 개선사항 확인</button>
+        <div class="summary" id="summary-line"></div>
+      </div>
+    </div>
+
+  </div><!-- /left-panel -->
+
+  <!-- RIGHT: 지문 선택 + 결과 -->
+  <div class="right-panel" id="right-panel">
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-icon">←</div>
+        <div>왼쪽에서 지문을 추가하거나 선택하세요</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-main -->
+
+<!-- ══════════════════════════════════════════════════════
+     기본기 훈련 탭
+     ══════════════════════════════════════════════════════ -->
+<div class="layout" id="tab-training" role="tabpanel" aria-labelledby="tab-btn-training" style="display:none" hidden>
+
+  <!-- ── LEFT ── -->
+  <div class="left-panel">
+
+    <!-- AI 설정 -->
+    <div class="card">
+      <div class="card-hd"><span>AI 설정</span></div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">Claude (Anthropic)</span><span class="pk-status" id="tr-api-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="tr-api-key-input" placeholder="sk-ant-..." autocomplete="off">
+          <button class="api-btn" onclick="trSaveApiKey()">저장</button>
+          <button class="api-btn del" onclick="trClearApiKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('claude','tr-api-key-input','tr-api-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">Gemini (Google)</span><span class="pk-status" id="tr-gemini-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="tr-gemini-key-input" placeholder="AIza..." autocomplete="off">
+          <button class="api-btn" onclick="trSaveGeminiKey()">저장</button>
+          <button class="api-btn del" onclick="trClearGeminiKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('gemini','tr-gemini-key-input','tr-gemini-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">OpenAI (GPT)</span><span class="pk-status" id="tr-openai-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="tr-openai-key-input" placeholder="sk-..." autocomplete="off">
+          <button class="api-btn" onclick="trSaveOpenAIKey()">저장</button>
+          <button class="api-btn del" onclick="trClearOpenAIKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('openai','tr-openai-key-input','tr-openai-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">DeepSeek</span><span class="pk-status" id="tr-deepseek-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="tr-deepseek-key-input" placeholder="sk-..." autocomplete="off">
+          <button class="api-btn" onclick="trSaveDeepSeekKey()">저장</button>
+          <button class="api-btn del" onclick="trClearDeepSeekKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('deepseek','tr-deepseek-key-input','tr-deepseek-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-select-body">
+        <div class="pv-row">
+          <span class="pv-label">출제</span>
+          <select class="pv-sel" id="tr-pv-design" onchange="_saveTrPvModels()">
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+        <div class="pv-row">
+          <span class="pv-label">검수</span>
+          <select class="pv-sel" id="tr-pv-review" onchange="_saveTrPvModels()">
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 지문 큐 -->
+    <div class="card">
+      <div class="card-hd"><span>지문 큐</span><span class="aux" id="tr-queue-status">0개</span></div>
+      <div style="padding:8px 12px" id="tr-passage-queue">
+        <div style="font-size:11px;color:#D1D5DB;text-align:center;padding:12px 0">지문을 추가하세요</div>
+      </div>
+      <div style="padding:0 12px 10px">
+        <button type="button" class="add-passage-btn" aria-label="기본기 훈련 지문 추가" title="지문 추가" onclick="trAddPassage()">+ 지문 추가</button>
+      </div>
+    </div>
+
+    <!-- 출제 · 결과 -->
+    <div class="card">
+      <div class="submit-area">
+        <button class="submit-btn" id="tr-run-btn" onclick="runTraining()" style="background:#7C3AED">⚡ 전체 순차 출제</button>
+        <button class="submit-btn" id="tr-stop-btn" onclick="stopTraining()" style="display:none;margin-top:6px;background:#DC2626">⏹ 출제 중지</button>
+        <div class="gp-box" id="tr-gp-box">
+          <div class="gp-top">
+            <span class="gp-count" id="tr-gp-count">0 / 0</span>
+            <span class="gp-time" id="tr-gp-time">0초</span>
+          </div>
+          <div class="gp-track"><div class="gp-fill" id="tr-gp-fill"></div></div>
+          <div class="gp-label" id="tr-gp-label">출제 준비 중…</div>
+          <div class="gp-cost" id="tr-gp-cost"></div>
+        </div>
+        <button class="submit-btn" id="tr-word-all-btn" onclick="trDownloadAllWord()" style="margin-top:8px;background:#059669;display:none">📄 전체 Word 다운로드</button>
+        <button class="submit-btn" id="tr-json-view-btn" onclick="trOpenJsonView()" style="margin-top:6px;background:#0F766E;display:none">{ } 전체 JSON 보기 · 복사</button>
+        <button class="submit-btn" id="tr-json-copy-all-btn" onclick="trCopyAllJsonDirect()" style="margin-top:6px;background:#2563EB;display:none">📋 전체 JSON 복사</button>
+        <button class="submit-btn" id="tr-json-all-btn" onclick="trDownloadAllJson()" style="margin-top:6px;background:#374151;display:none">⬇ 전체 JSON 다운로드</button>
+        <button class="submit-btn" id="tr-inspect-btn" onclick="openTrInspect()" style="margin-top:6px;background:#7C3AED;display:none">🔍 개선사항 확인</button>
+        <div class="summary" id="tr-summary-line"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── RIGHT ── -->
+  <div class="right-panel" id="tr-right-panel">
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-icon">←</div>
+        <div>왼쪽에서 지문을 추가하거나 선택하세요</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-training -->
+
+<!-- ══════════════════════════════════════════════════════
+     유의어 출제 탭
+     ══════════════════════════════════════════════════════ -->
+<div id="tab-synonym" role="tabpanel" aria-labelledby="tab-btn-synonym" style="display:none" hidden>
+<div class="syn-3col">
+
+  <!-- ── COL 1: AI 설정 + 컨트롤 ── -->
+  <div class="syn-col-cfg">
+
+    <!-- API 키 카드 -->
+    <div class="card">
+      <div class="card-hd"><span>AI 설정</span></div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">Claude (Anthropic)</span><span class="pk-status" id="syn-c-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="syn-api-key-input" placeholder="sk-ant-..." autocomplete="off">
+          <button class="api-btn" onclick="synSaveApiKey()">저장</button>
+          <button class="api-btn del" onclick="synClearApiKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('claude','syn-api-key-input','syn-c-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">Gemini (Google)</span><span class="pk-status" id="syn-g-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="syn-gemini-key-input" placeholder="AIza..." autocomplete="off">
+          <button class="api-btn" onclick="synSaveGeminiKey()">저장</button>
+          <button class="api-btn del" onclick="synClearGeminiKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('gemini','syn-gemini-key-input','syn-g-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">OpenAI (GPT)</span><span class="pk-status" id="syn-o-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="syn-openai-key-input" placeholder="sk-..." autocomplete="off">
+          <button class="api-btn" onclick="synSaveOpenAIKey()">저장</button>
+          <button class="api-btn del" onclick="synClearOpenAIKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('openai','syn-openai-key-input','syn-o-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">DeepSeek</span><span class="pk-status" id="syn-d-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="syn-deepseek-key-input" placeholder="sk-..." autocomplete="off">
+          <button class="api-btn" onclick="synSaveDeepSeekKey()">저장</button>
+          <button class="api-btn del" onclick="synClearDeepSeekKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('deepseek','syn-deepseek-key-input','syn-d-status',this)">연결확인</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 수집 AI 카드 -->
+    <div class="card">
+      <div class="card-hd"><span>유의어 수집 AI</span><span class="aux">최대 4개 병렬</span></div>
+      <div class="syn-ai-grid">
+        <div class="syn-ai-slot">
+          <div class="syn-ai-lbl">AI 1 · 수집 (필수)</div>
+          <select class="syn-pv-sel" id="syn-ai1">
+            <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+        <div class="syn-ai-slot">
+          <div class="syn-ai-lbl">AI 2 · 수집 (선택)</div>
+          <select class="syn-pv-sel" id="syn-ai2">
+            <option value="gemini-2.5-pro" selected>Gemini 2.5 Pro</option>
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="">— 사용 안 함 —</option>
+          </select>
+        </div>
+        <div class="syn-ai-slot">
+          <div class="syn-ai-lbl">AI 3 · 수집 (선택)</div>
+          <select class="syn-pv-sel" id="syn-ai3">
+            <option value="" selected>— 사용 안 함 —</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+        <div class="syn-ai-slot">
+          <div class="syn-ai-lbl">AI 4 · 수집 (선택)</div>
+          <select class="syn-pv-sel" id="syn-ai4">
+            <option value="" selected>— 사용 안 함 —</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 병합 · 검증 AI 카드 -->
+    <div class="card">
+      <div class="card-hd"><span>병합 · 검증 AI</span><span class="aux">순차 2회</span></div>
+      <div class="syn-ai-grid">
+        <div class="syn-ai-slot">
+          <div class="syn-ai-lbl">병합 AI</div>
+          <select class="syn-pv-sel" id="syn-val1">
+            <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+        <div class="syn-ai-slot">
+          <div class="syn-ai-lbl">검증 AI</div>
+          <select class="syn-pv-sel" id="syn-val2">
+            <option value="claude-opus-4-6" selected>Claude Opus 4.6</option>
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 실행 카드 -->
+    <div class="card">
+      <div style="padding:12px;display:flex;flex-direction:column;gap:7px">
+        <button class="syn-run-btn" id="syn-run-all-btn" onclick="synRunAll()">⚡ 전체 병렬 실행</button>
+        <!-- 진행 현황 + 통계 박스 -->
+        <div class="gp-box" id="syn-gp-box" style="display:none">
+          <div class="gp-top">
+            <span class="gp-count" id="syn-gp-count">0 / 0 지문</span>
+            <span class="gp-time" id="syn-gp-time">0초</span>
+          </div>
+          <div class="gp-track"><div class="gp-fill" id="syn-gp-fill"></div></div>
+          <div class="gp-label" id="syn-gp-label">실행 준비 중…</div>
+          <div class="gp-cost" id="syn-gp-cost"></div>
+        </div>
+        <!-- 전체 완료 후 다운로드 버튼 -->
+        <button class="syn-run-btn" id="syn-word-all-btn" onclick="synDownloadWordAll()" style="display:none;background:#374151;font-size:11px;padding:8px">📄 전체 Word 다운로드</button>
+        <button class="syn-run-btn" id="syn-excel-all-btn" onclick="synDownloadExcelAll()" style="display:none;background:#1D6F42;font-size:11px;padding:8px">📊 전체 Excel 다운로드</button>
+        <button type="button" class="syn-run-btn" aria-label="유의어 훈련 지문 추가" title="지문 추가" style="background:#059669;font-size:11px;padding:8px" onclick="synAddPassage()">+ 지문 추가</button>
+        <button class="syn-run-btn" style="background:#374151;font-size:11px;padding:8px" onclick="document.getElementById('syn-load-input').click()">📂 JSON 불러오기</button>
+        <input type="file" id="syn-load-input" accept=".json" style="display:none" onchange="synLoadJson(this)">
+        <!-- 누적 다운로드 -->
+        <div id="syn-accum-bar" style="display:none;margin-top:2px;padding:8px 10px;background:#F0FDF4;border-radius:8px;border:1px solid #BBF7D0">
+          <div style="font-size:11px;color:#166534;margin-bottom:6px">📚 누적 <span id="syn-accum-count">0</span>개 지문</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            <button class="syn-dl-btn" onclick="synDownloadWordAll()" style="background:#374151;font-size:10px;padding:5px">📄 통합 Word</button>
+            <button class="syn-dl-btn" onclick="synDownloadExcelAll()" style="background:#1D6F42;font-size:10px;padding:5px">📊 통합 Excel</button>
+            <button class="syn-dl-btn" onclick="synClearAccum()" style="background:#DC2626;font-size:10px;padding:5px">🗑 초기화</button>
+          </div>
+        </div>
+        <!-- JSON resume -->
+        <button class="syn-run-btn" id="syn-resume-btn" onclick="synResumeRun()" style="display:none;background:#059669;font-size:11px;padding:8px">▶ Step 2부터 재개</button>
+      </div>
+    </div>
+
+    <!-- JSON 뷰어 -->
+    <div class="card" id="syn-json-card" style="display:none">
+      <div class="card-hd">
+        <span>JSON 데이터</span>
+        <button class="api-btn" id="syn-json-toggle-btn" onclick="synToggleJson()">펼치기</button>
+      </div>
+      <div id="syn-json-body" style="display:none;padding:0 16px 4px">
+        <pre id="syn-json-pre" style="font-size:10px;line-height:1.55;background:#F9FAFB;border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;overflow:auto;max-height:300px;white-space:pre-wrap;word-break:break-all;color:#374151"></pre>
+      </div>
+      <div style="padding:0 16px 12px;display:flex;gap:7px;flex-wrap:wrap">
+        <button class="syn-dl-btn" onclick="synDownloadJson()" style="background:#374151">⬇ JSON 다운로드</button>
+      </div>
+    </div>
+
+  </div><!-- /syn-col-cfg -->
+
+  <!-- ── COL 2: 지문 큐 ── -->
+  <div class="syn-col-queue" id="syn-queue-panel">
+
+    <!-- 기본 지문 0 -->
+    <div class="card syn-pq-card" id="syn-pq-0" data-pid="0">
+      <div class="syn-pq-hd">
+        <span class="syn-pq-title">지문 1</span>
+        <span class="syn-pq-status" id="syn-pq-0-status">대기</span>
+      </div>
+      <div style="padding:8px 12px 10px">
+        <textarea id="syn-pq-0-text" class="syn-pq-ta" placeholder="영어 지문을 붙여넣으세요…"></textarea>
+      </div>
+      <div class="syn-mini-step-bar" id="syn-pq-0-steps" style="display:none">
+          <div class="syn-step" id="syn-pq-0-step-1"><div class="syn-step-dot">①</div><div class="syn-step-lbl">추출</div></div>
+          <div class="syn-step" id="syn-pq-0-step-2"><div class="syn-step-dot">②</div><div class="syn-step-lbl">수집</div></div>
+          <div class="syn-step" id="syn-pq-0-step-3"><div class="syn-step-dot">③</div><div class="syn-step-lbl">병합</div></div>
+          <div class="syn-step" id="syn-pq-0-step-4"><div class="syn-step-dot">④</div><div class="syn-step-lbl">검증</div></div>
+        </div>
+      <div class="syn-mini-log" id="syn-pq-0-log" style="display:none"></div>
+    </div>
+
+  </div><!-- /syn-col-queue -->
+
+  <!-- ── COL 3: 결과 ── -->
+  <div class="syn-col-results" id="syn-results-panel">
+    <div class="card" id="syn-results-empty">
+      <div class="empty-state">
+        <div class="empty-icon">←</div>
+        <div>지문을 입력하고 실행하세요</div>
+      </div>
+    </div>
+  </div><!-- /syn-col-results -->
+
+</div><!-- /syn-3col -->
+</div><!-- /tab-synonym -->
+
+<!-- ══════════════════════════════════════════════════════
+     블루프린트 분석 탭
+     ══════════════════════════════════════════════════════ -->
+<div id="tab-blueprint" role="tabpanel" aria-labelledby="tab-btn-blueprint" style="display:none" hidden>
+<div class="bp-3col">
+
+  <div class="bp-col-cfg">
+    <div class="card bp-queue-card">
+      <div class="card-hd"><span>지문 큐</span><span class="aux" id="bp-queue-status">0개</span></div>
+      <div class="bp-queue-list" id="bp-queue-list"></div>
+      <div class="bp-queue-actions">
+        <button type="button" class="bp-add-btn" onclick="bpAddPassage()">+ 지문 추가</button>
+      </div>
+    </div>
+
+    <div class="card bp-settings-card">
+      <div class="card-hd"><span>AI 설정</span><span class="aux">저장된 공통 키 사용</span></div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">Claude (Anthropic)</span><span class="pk-status" id="bp-c-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="bp-api-key-input" placeholder="sk-ant-..." autocomplete="off">
+          <button class="api-btn" onclick="bpSaveApiKey()">저장</button>
+          <button class="api-btn del" onclick="bpClearApiKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('claude','bp-api-key-input','bp-c-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">Gemini (Google)</span><span class="pk-status" id="bp-g-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="bp-gemini-key-input" placeholder="AIza..." autocomplete="off">
+          <button class="api-btn" onclick="bpSaveGeminiKey()">저장</button>
+          <button class="api-btn del" onclick="bpClearGeminiKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('gemini','bp-gemini-key-input','bp-g-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">OpenAI (GPT)</span><span class="pk-status" id="bp-o-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="bp-openai-key-input" placeholder="sk-..." autocomplete="off">
+          <button class="api-btn" onclick="bpSaveOpenAIKey()">저장</button>
+          <button class="api-btn del" onclick="bpClearOpenAIKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('openai','bp-openai-key-input','bp-o-status',this)">연결확인</button>
+        </div>
+      </div>
+      <div class="provider-keys">
+        <div class="pk-label"><span class="pk-name">DeepSeek</span><span class="pk-status" id="bp-d-status">키 필요</span></div>
+        <div class="api-row">
+          <input type="password" id="bp-deepseek-key-input" placeholder="sk-..." autocomplete="off">
+          <button class="api-btn" onclick="bpSaveDeepSeekKey()">저장</button>
+          <button class="api-btn del" onclick="bpClearDeepSeekKey()">삭제</button>
+          <button class="api-btn check" onclick="checkApiConnection('deepseek','bp-deepseek-key-input','bp-d-status',this)">연결확인</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bp-analysis-ai-card">
+      <div class="card-hd"><span>블루프린트 분석 AI</span><span class="aux">최대 4개 병렬</span></div>
+      <div class="bp-ai-grid">
+        <div class="bp-ai-slot">
+          <div class="bp-ai-lbl">AI 1 · 분석 (필수)</div>
+          <select class="bp-pv-sel" id="bp-ai1">
+            <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+        <div class="bp-ai-slot">
+          <div class="bp-ai-lbl">AI 2 · 분석 (선택)</div>
+          <select class="bp-pv-sel" id="bp-ai2">
+            <option value="" selected>— 사용 안 함 —</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+        <div class="bp-ai-slot">
+          <div class="bp-ai-lbl">AI 3 · 분석 (선택)</div>
+          <select class="bp-pv-sel" id="bp-ai3">
+            <option value="" selected>— 사용 안 함 —</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+        <div class="bp-ai-slot">
+          <div class="bp-ai-lbl">AI 4 · 분석 (선택)</div>
+          <select class="bp-pv-sel" id="bp-ai4">
+            <option value="" selected>— 사용 안 함 —</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bp-workbook-ai-card">
+      <div class="card-hd"><span>워크북 AI</span><span class="aux">최대 4개 병렬</span></div>
+      <div class="bp-ai-grid">
+        <div class="bp-ai-slot">
+          <div class="bp-ai-lbl">AI 1 · 워크북 (필수)</div>
+          <select class="bp-pv-sel" id="bp-workbook-ai">
+            <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+        <div class="bp-ai-slot">
+          <div class="bp-ai-lbl">AI 2 · 워크북 (선택)</div>
+          <select class="bp-pv-sel" id="bp-workbook-ai2">
+            <option value="" selected>— 사용 안 함 —</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+        <div class="bp-ai-slot">
+          <div class="bp-ai-lbl">AI 3 · 워크북 (선택)</div>
+          <select class="bp-pv-sel" id="bp-workbook-ai3">
+            <option value="" selected>— 사용 안 함 —</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="claude-fable-5">Fable (claude-fable-5)</option>
+          </select>
+        </div>
+        <div class="bp-ai-slot">
+          <div class="bp-ai-lbl">AI 4 · 워크북 (선택)</div>
+          <select class="bp-pv-sel" id="bp-workbook-ai4">
+            <option value="" selected>— 사용 안 함 —</option>
+            <option value="deepseek-chat">DeepSeek V3</option>
+            <option value="deepseek-reasoner">DeepSeek R1</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bp-run-card">
+      <div class="bp-run-box">
+        <button class="bp-run-btn" id="bp-run-analysis-btn" onclick="bpRunAnalysis()">🔬 지문 분석</button>
+        <button class="bp-run-btn workbook" id="bp-run-workbook-btn" onclick="bpRunWorkbook()">📖 워크북 생성</button>
+        <div class="gp-box" id="bp-gp-box" style="display:none">
+          <div class="gp-top">
+            <span class="gp-count" id="bp-gp-count">0 / 0</span>
+            <span class="gp-time" id="bp-gp-time">0초</span>
+          </div>
+          <div class="gp-track"><div class="gp-fill" id="bp-gp-fill"></div></div>
+          <div class="gp-label" id="bp-gp-label">실행 준비 중…</div>
+          <div class="gp-cost" id="bp-gp-cost"></div>
+        </div>
+        <button class="bp-run-btn download" id="bp-pdf-btn" onclick="bpDownloadAnalysisPdf()" style="display:none">📄 분석 PDF</button>
+        <button class="bp-run-btn download word" id="bp-word-btn" onclick="bpDownloadWorkbookWord()" style="display:none">📖 워크북 Word</button>
+      </div>
+    </div>
+
+    <div class="card" id="bp-log-card">
+      <div class="card-hd"><span>실행 로그</span></div>
+      <div class="bp-log-box" id="bp-log">대기 중</div>
+    </div>
+  </div>
+
+  <div class="bp-col-input">
+    <div class="card">
+      <div class="card-hd"><span>입력</span><span class="aux">참조 정보 + 영어 지문</span></div>
+      <div class="bp-input-body">
+        <label for="bp-reference">참조 정보</label>
+        <input type="text" id="bp-reference" placeholder="예: 수능 영어 | 22번 | 요지 파악">
+        <label for="bp-passage">영어 지문</label>
+        <textarea id="bp-passage" placeholder="여기에 영어 지문을 붙여넣으세요..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="bp-col-results">
+    <div class="bp-view-tabs">
+      <button type="button" class="bp-view-tab active" id="bp-view-analysis" onclick="bpSwitchView('analysis')">지문 분석</button>
+      <button type="button" class="bp-view-tab" id="bp-view-workbook" onclick="bpSwitchView('workbook')">워크북</button>
+    </div>
+    <div class="card bp-result-card" id="bp-analysis-panel">
+      <div class="empty-state">
+        <div class="empty-icon">←</div>
+        <div>지문을 입력하고 분석을 실행하세요</div>
+      </div>
+    </div>
+    <div class="card bp-result-card" id="bp-workbook-panel" style="display:none">
+      <div class="empty-state">
+        <div class="empty-icon">←</div>
+        <div>워크북 생성을 실행하세요</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /bp-3col -->
+</div><!-- /tab-blueprint -->
+
+
+
+<div class="toast" id="toast"></div>
+
+<!-- ── 기본기 훈련 JSON 뷰어 모달 ── -->
+<div id="tr-json-modal" onclick="if(event.target===this)trCloseJsonView()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:700px;max-width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+    <div style="padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:8px;background:var(--bg)">
+      <span style="font-size:14px;font-weight:700;flex:1;color:#111827">{ } JSON 출제 결과</span>
+      <button id="tr-json-copy-btn" onclick="trCopyAllJson()" style="padding:5px 14px;border-radius:7px;border:1px solid var(--grn-bd);background:var(--grn-lt);color:var(--grn);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">전체 복사</button>
+      <button onclick="trDownloadAllJson()" style="padding:5px 14px;border-radius:7px;border:1px solid #D1D5DB;background:#F9FAFB;color:#374151;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">⬇ 다운로드</button>
+      <button onclick="trCloseJsonView()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#9CA3AF;line-height:1;padding:0 2px">✕</button>
+    </div>
+    <pre id="tr-json-pre" style="flex:1;overflow:auto;margin:0;padding:14px 16px;font-size:11px;font-family:'JetBrains Mono',monospace,monospace;line-height:1.65;color:#111827;background:#FAFBFF;white-space:pre-wrap;word-break:break-all"></pre>
+  </div>
+</div>
+
+<!-- ── 문제 출제 JSON 뷰어 모달 ── -->
+<div id="json-modal" onclick="if(event.target===this)closeJsonView()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:700px;max-width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+    <div style="padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:8px;background:var(--bg)">
+      <span style="font-size:14px;font-weight:700;flex:1;color:#111827">{ } JSON 출제 결과</span>
+      <button id="json-copy-btn" onclick="copyAllJson()" style="padding:5px 14px;border-radius:7px;border:1px solid var(--grn-bd);background:var(--grn-lt);color:var(--grn);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">전체 복사</button>
+      <button onclick="downloadAllJson()" style="padding:5px 14px;border-radius:7px;border:1px solid #D1D5DB;background:#F9FAFB;color:#374151;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">⬇ 다운로드</button>
+      <button onclick="closeJsonView()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#9CA3AF;line-height:1;padding:0 2px">✕</button>
+    </div>
+    <pre id="json-pre" style="flex:1;overflow:auto;margin:0;padding:14px 16px;font-size:11px;font-family:'JetBrains Mono',monospace,monospace;line-height:1.65;color:#111827;background:#FAFBFF;white-space:pre-wrap;word-break:break-all"></pre>
+  </div>
+</div>
+
+<!-- ── 개선사항 패널 ── -->
+<div id="inspect-panel">
+  <div class="isp-hd">
+    <span class="isp-title">🔍 AI 품질 점검 · 개선사항</span>
+    <button class="isp-close" onclick="closeInspect()">✕</button>
+  </div>
+  <div class="isp-body" id="inspect-body">
+    <div class="isp-loading">패널을 열려면 출제 완료 후 "개선사항 확인"을 클릭하세요.</div>
+  </div>
+</div>
+
+<script src="assets/js/app-legacy.js?v=20260522-ho-summary-vocab-v1"></script>
+<script src="assets/js/app-proxy.js"></script>
+<script src="assets/js/app-state.js"></script>
+<script src="assets/js/app-events.js"></script>
+<script src="assets/js/app-safety.js"></script>
+<script src="assets/js/blueprint-tab.js?v=20260515-blueprint-v1"></script>
+
+<!-- CI tab removed — integrated into 문제출제 tab -->
+
+</body>
+</html>
