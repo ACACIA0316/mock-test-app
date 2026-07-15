@@ -1,0 +1,55 @@
+#auth-gate-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg,#F9FAFB);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
+}
+#auth-gate-overlay.hidden{display:none}
+.ag-card{
+  width:100%;max-width:360px;
+  background:var(--card,#fff);
+  border:1px solid var(--bdr,#E5E7EB);
+  border-radius:16px;
+  box-shadow:0 8px 32px rgba(0,0,0,.08);
+  padding:32px 28px;
+  text-align:center;
+}
+.ag-title{font-size:16px;font-weight:800;color:#111827;margin-bottom:4px}
+.ag-sub{font-size:11px;color:#9CA3AF;margin-bottom:20px}
+.ag-input{
+  width:100%;padding:12px 14px;border:1.5px solid var(--bdr,#E5E7EB);
+  border-radius:10px;font-size:15px;letter-spacing:2px;text-align:center;
+  font-family:inherit;outline:none;color:#111827;margin-bottom:10px;
+  text-transform:uppercase;
+}
+.ag-input:focus{border-color:var(--blue,#2563eb)}
+.ag-btn{
+  width:100%;padding:12px;border-radius:10px;border:none;
+  background:var(--blue,#2563eb);color:#fff;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:inherit;transition:background .15s;
+}
+.ag-btn:hover{background:#1D4ED8}
+.ag-btn:disabled{background:#93C5FD;cursor:not-allowed}
+.ag-error{
+  font-size:11px;color:#DC2626;margin-top:10px;min-height:14px;
+}
+.ag-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:10px;color:#9CA3AF;margin-top:18px;
+}
+#auth-gate-userbar{
+  position:fixed;top:10px;right:16px;z-index:400;
+  display:flex;align-items:center;gap:8px;
+  background:var(--card,#fff);border:1px solid var(--bdr,#E5E7EB);
+  border-radius:99px;padding:5px 12px 5px 12px;font-size:11px;color:#374151;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+#auth-gate-userbar .ag-name{font-weight:700}
+#auth-gate-userbar .ag-role{
+  font-size:9px;padding:1px 7px;border-radius:99px;background:#EFF6FF;color:#1D4ED8;font-weight:700;
+}
+#auth-gate-userbar .ag-role.admin{background:#F5F3FF;color:#6D28D9}
+#auth-gate-userbar .ag-logout{
+  border:none;background:none;color:#9CA3AF;cursor:pointer;font-size:11px;padding:0;font-family:inherit;
+}
+#auth-gate-userbar .ag-logout:hover{color:#EF4444}
