@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 대시보드 · multiple-produce</title>
+<link rel="stylesheet" href="assets/css/base.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  body{padding:24px;max-width:1100px;margin:0 auto}
+  h1{font-size:18px;font-weight:800;margin-bottom:4px}
+  .sub{font-size:12px;color:#9CA3AF;margin-bottom:24px}
+
+  #gate{max-width:340px;margin:80px auto;text-align:center}
+  #gate .card{padding:28px 24px}
+  #gate input{width:100%;padding:11px 14px;border:1.5px solid var(--bdr);border-radius:10px;
+    font-size:15px;letter-spacing:2px;text-align:center;text-transform:uppercase;outline:none;margin-bottom:10px}
+  #gate input:focus{border-color:var(--blue)}
+  #gate button{width:100%;padding:11px;border-radius:10px;border:none;background:var(--blue);
+    color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+  #gate button:hover{background:#1D4ED8}
+  #gateError{font-size:11px;color:#DC2626;margin-top:8px;min-height:14px}
+
+  #dashboard{display:none}
+  .stat-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:20px}
+  .stat-card{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:14px 16px}
+  .stat-card .num{font-size:22px;font-weight:800;color:var(--blue)}
+  .stat-card .lbl{font-size:11px;color:#9CA3AF;margin-top:2px}
+
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{background:var(--bg);text-align:left;padding:8px 10px;color:#6B7280;font-weight:700;
+    border-bottom:1px solid var(--bdr);white-space:nowrap}
+  td{padding:8px 10px;border-bottom:1px solid #F3F4F6}
+  tr:last-child td{border-bottom:none}
+  .badge{font-size:9.5px;padding:2px 8px;border-radius:99px;font-weight:700;white-space:nowrap}
+  .badge.obj{background:var(--blue-lt);color:var(--blue)}
+  .badge.subj{background:var(--purp-lt);color:var(--purp)}
+  .diff{font-size:9.5px;padding:2px 8px;border-radius:99px;font-weight:700}
+  .diff.하{background:#ECFDF5;color:#059669}
+  .diff.중{background:#EFF6FF;color:#2563EB}
+  .diff.상{background:#FFFBEB;color:#D97706}
+  .diff.최상{background:#FEF2F2;color:#DC2626}
+
+  .section-title{font-size:13px;font-weight:800;margin:26px 0 10px}
+  .filter-row{display:flex;gap:8px;margin-bottom:10px}
+  .filter-row input{flex:1;padding:8px 12px;border:1px solid var(--bdr);border-radius:8px;font-size:12px;outline:none}
+  .empty{text-align:center;color:#D1D5DB;padding:30px;font-size:12px}
+  .table-wrap{max-height:520px;overflow:auto;border:1px solid var(--bdr);border-radius:10px}
+  .loading{text-align:center;padding:40px;color:#9CA3AF;font-size:12px}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="card">
+    <h1 style="margin-bottom:4px">관리자 대시보드</h1>
+    <div class="sub" style="margin-bottom:18px">관리자 코드를 입력하세요</div>
+    <input id="codeInput" type="text" placeholder="코드 입력" maxlength="20" autocomplete="off">
+    <button id="loginBtn">확인</button>
+    <div id="gateError"></div>
+  </div>
+</div>
+
+<div id="dashboard">
+  <h1>관리자 대시보드</h1>
+  <div class="sub">선생님별 문제 생성 현황</div>
+
+  <div id="statCards" class="stat-cards"></div>
+
+  <div class="section-title">📊 선생님별 요약</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>이름</th><th>총 생성 개수</th><th>최근 생성일</th></tr></thead>
+      <tbody id="summaryBody"></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">📝 최근 생성 기록 (최신순)</div>
+  <div class="filter-row">
+    <input id="filterInput" type="text" placeholder="선생님 이름으로 검색...">
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>선생님</th><th>구분</th><th>유형</th><th>난이도</th><th>생성 시각</th></tr></thead>
+      <tbody id="detailBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var SUPABASE_URL = 'https://ownvnfjkdsokzrwncekg.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_uAbGLWv5_NcJX9pkh7EWhA_BDLJstcn';
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  var allDetails = [];
+
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function fmtDate(iso){
+    if(!iso) return '-';
+    var d = new Date(iso);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+
+      ' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function renderStats(stats){
+    var total = stats.reduce(function(sum,s){ return sum + Number(s.total_count||0); }, 0);
+    var teacherCount = stats.length;
+    var mostActive = stats.slice().sort(function(a,b){ return b.total_count - a.total_count; })[0];
+
+    var cards = [
+      {num: total, lbl: '전체 문제 생성 수'},
+      {num: teacherCount, lbl: '등록된 선생님 수'},
+      {num: mostActive ? mostActive.teacher_name : '-', lbl: '최다 생성 선생님'}
+    ];
+    document.getElementById('statCards').innerHTML = cards.map(function(c){
+      return '<div class="stat-card"><div class="num">'+esc(c.num)+'</div><div class="lbl">'+esc(c.lbl)+'</div></div>';
+    }).join('');
+  }
+
+  function renderSummary(stats){
+    var sorted = stats.slice().sort(function(a,b){ return b.total_count - a.total_count; });
+    var rows = sorted.map(function(s){
+      return '<tr><td>'+esc(s.teacher_name)+'</td><td>'+esc(s.total_count)+'개</td><td>'+fmtDate(s.last_created)+'</td></tr>';
+    }).join('');
+    document.getElementById('summaryBody').innerHTML = rows || '<tr><td colspan="3" class="empty">데이터 없음</td></tr>';
+  }
+
+  function renderDetail(list){
+    if (!list.length) {
+      document.getElementById('detailBody').innerHTML = '<tr><td colspan="5" class="empty">기록 없음</td></tr>';
+      return;
+    }
+    var rows = list.slice(0, 300).map(function(q){
+      var badgeClass = q.question_category === '서답형' ? 'subj' : 'obj';
+      return '<tr>' +
+        '<td>'+esc(q.teacher_name)+'</td>' +
+        '<td><span class="badge '+badgeClass+'">'+esc(q.question_category)+'</span></td>' +
+        '<td>'+esc(q.question_type)+'</td>' +
+        '<td><span class="diff '+esc(q.difficulty)+'">'+esc(q.difficulty)+'</span></td>' +
+        '<td>'+fmtDate(q.created_at)+'</td>' +
+      '</tr>';
+    }).join('');
+    document.getElementById('detailBody').innerHTML = rows;
+  }
+
+  document.getElementById('filterInput').addEventListener('input', function(e){
+    var q = e.target.value.trim();
+    if (!q) { renderDetail(allDetails); return; }
+    renderDetail(allDetails.filter(function(item){
+      return item.teacher_name && item.teacher_name.indexOf(q) !== -1;
+    }));
+  });
+
+  async function loadDashboard(code){
+    var errBox = document.getElementById('gateError');
+    var btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.textContent = '확인 중...';
+    try {
+      var statsRes = await sb.rpc('get_admin_stats', { p_admin_code: code });
+      if (statsRes.error) throw statsRes.error;
+
+      var detailRes = await sb.rpc('get_admin_questions', { p_admin_code: code });
+      if (detailRes.error) throw detailRes.error;
+
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+
+      renderStats(statsRes.data || []);
+      renderSummary(statsRes.data || []);
+      allDetails = detailRes.data || [];
+      renderDetail(allDetails);
+    } catch (e) {
+      console.error(e);
+      errBox.textContent = '코드가 올바르지 않거나 관리자 권한이 없습니다.';
+      btn.disabled = false;
+      btn.textContent = '확인';
+    }
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', function(){
+    var code = document.getElementById('codeInput').value.trim();
+    if (!code) { document.getElementById('gateError').textContent = '코드를 입력해주세요'; return; }
+    loadDashboard(code);
+  });
+  document.getElementById('codeInput').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') document.getElementById('loginBtn').click();
+  });
+  document.getElementById('codeInput').addEventListener('input', function(e){
+    e.target.value = e.target.value.toUpperCase();
+  });
+})();
+</script>
+
+</body>
+</html>
