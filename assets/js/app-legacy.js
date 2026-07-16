@@ -485,6 +485,24 @@ var _DEFAULT_JOOKWAN_PARAMS = {
   new_order_blank:   { variant: null, morph_change: false, word_add: 0, use_count: 1, length: '중', chunking: '중', sentence_difficulty: '중' },
 };
 
+function _understandingSmSubtypeInstruction(params) {
+  var subtype = params && params.subtype ? String(params.subtype).toUpperCase() : 'AUTO';
+  return '\n\n[핵심내용형(SM) A~I 세부유형 반영 - 필수]\n' +
+    '- 핵심내용형(SM)은 단일 유형이 아니라 A형부터 I형까지 9개 세부유형을 가진다.\n' +
+    '- subtype이 null이면 지문 구조를 분석해 A~I 중 가장 적합한 유형을 자동 선택하고, JSON의 subtype/subtype_name에 반드시 반영한다.\n' +
+    '- 현재 요청 subtype: ' + subtype + '\n' +
+    '- A형: 개념 발생/추상화. 지문의 개념, 방법, 의미를 일반화해 설명한다.\n' +
+    '- B형: 착각/문제 원인 + 해결 효과. 오해, 원인, 대응, 결과의 흐름을 묻는다.\n' +
+    '- C형: 개인 경험 후 심리 변화. 전후 인식이나 감정 변화를 우리말로 정리한다.\n' +
+    '- D형: 계기/이유 복수 근거. 특정 행동이나 판단의 이유를 여러 근거로 설명한다.\n' +
+    '- E형: 이론 + 사례 적용. 개념을 실제 상황이나 행동 예측에 적용한다.\n' +
+    '- F형: 매체/사건 후 변화. 정보 공개, 사건, 매체 노출 뒤 인식이나 제도 변화를 묻는다.\n' +
+    '- G형: 특정 이유 문장 추출. 지문 속 핵심 근거 문장을 그대로 찾거나 요약한다.\n' +
+    '- H형: 구체적 사건 해석. 사례의 의미, 반응, 평가를 지문 근거로 정리한다.\n' +
+    '- I형: 갈등/불일치 메커니즘. 집단 간 차이, 비율 차이, 지식 격차가 만드는 현상을 설명한다.\n' +
+    '- 설명(explanation_summary/explanation_bogi)에는 선택한 세부유형이 왜 적합한지와 본문 근거를 함께 적는다.';
+}
+
 function _isJookwanWordbankBlank(type, params) {
   return (type === 'summary_blank' || type === 'restatement_blank') && params && params.wordbank === true;
 }
@@ -3913,6 +3931,7 @@ async function _generateQuestion(passageText, qDef, onEvent, providers, apiKey, 
       : '';
     var wordOrderNote = type === 'word_order_blank' ? _wordOrderBlankInstruction(qParams) : '';
     var newOrderNote = type === 'new_order_blank' ? _newOrderBlankInstruction(qParams) : '';
+    var understandingSmNote = type === 'understanding_sm' ? _understandingSmSubtypeInstruction(qParams) : '';
     if (_usesGrammarCandidateDesignFlow(type)) {
       if (onEvent) onEvent({ type: 'progress', qType: type, step: '어법 후보 설계 중 (' + _grammarDcDesignModel(_pv) + ')' });
       var designRaw = await callGrammarDesign(sys, origCtx + _grammarCandidateDesignPrompt(passageText, type, qParams));
@@ -3927,7 +3946,7 @@ async function _generateQuestion(passageText, qDef, onEvent, providers, apiKey, 
       }
     } else {
       var grammarSubjNote = _grammarSubjectiveReq(type, qParams);
-      var raw = await callDesign(sys, origCtx + passageText + '\n\n---\n\n유형: ' + type + '. JSON 모드로 출제해줘.\n\n출제 파라미터:\n' + JSON.stringify(qParams, null, 2) + answerTypeRule + blankDisplayRule + blankExplanationRule + wordbankRule + restatementPassageNote + summaryBlankRule + grammarSubjNote + wordOrderNote + newOrderNote);
+      var raw = await callDesign(sys, origCtx + passageText + '\n\n---\n\n유형: ' + type + '. JSON 모드로 출제해줘.\n\n출제 파라미터:\n' + JSON.stringify(qParams, null, 2) + answerTypeRule + blankDisplayRule + blankExplanationRule + wordbankRule + restatementPassageNote + summaryBlankRule + grammarSubjNote + wordOrderNote + newOrderNote + understandingSmNote);
       question = _enforceNoFirstLetterHintForWordbank(type, qParams, _extractJson(raw) || { raw: raw });
     }
     if (type === 'word_order_blank') {
@@ -5522,7 +5541,7 @@ const SUBJ_TYPES = [
   {type:'restatement_blank', label:'재진술 빈칸형', cls:'subj', rw:[130,999], tip:'핵심 문장을 재진술한 문장의 빈칸을 채우는 주관식'},
   {type:'word_order_blank',  label:'어순배열형',    cls:'wo',   rw:[130,999], tip:'주어진 어구를 올바른 순서로 배열하는 주관식'},
   {type:'new_order_blank',   label:'New 어순배열형', cls:'wo',   rw:[130,999], tip:'원문 변형(P/P-1/S/D형) 빈칸 문장을 어순배열로 출제하는 주관식'},
-  {type:'understanding_sm',  label:'핵심내용형(SM)', cls:'subj', rw:[130,999], tip:'지문 핵심 논리를 한국어로 압축 서술. 9가지 세부 패턴(A~I) 자동 판별'},
+  {type:'understanding_sm',  label:'핵심내용형(SM)', cls:'subj', rw:[130,999], tip:'지문 핵심 논리를 한국어로 압축 서술. A형(개념 추상화)~I형(갈등/불일치 메커니즘)까지 9가지 세부 패턴을 자동 판별'},
 ];
 const ALL_TYPES = [...GRAMMAR_TYPES, ...OBJ_TYPES, ...SUBJ_TYPES];
 const SUBJ_SET  = new Set(['summary_blank','restatement_blank','word_order_blank','understanding_sm','new_order_blank','어법수정','어법수정(DC)','어법재작성','어법배열','어법구문영작','어법어형','어법서술']);
