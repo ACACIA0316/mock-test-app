@@ -67,6 +67,14 @@
 
   <div id="statCards" class="stat-cards"></div>
 
+  <div class="section-title">👥 선생님 명단 (소속순)</div>
+  <div class="table-wrap" style="margin-bottom:26px">
+    <table>
+      <thead><tr><th>소속</th><th>이름</th><th>코드</th><th>역할</th></tr></thead>
+      <tbody id="teacherListBody"></tbody>
+    </table>
+  </div>
+
   <div class="section-title">📊 선생님별 요약</div>
   <div class="table-wrap">
     <table>
@@ -106,6 +114,23 @@
     var d = new Date(iso);
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+
       ' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function renderTeacherList(list){
+    if (!list.length) {
+      document.getElementById('teacherListBody').innerHTML = '<tr><td colspan="4" class="empty">데이터 없음</td></tr>';
+      return;
+    }
+    var rows = list.map(function(t){
+      var roleLabel = t.role === 'admin' ? '관리자' : '선생님';
+      return '<tr>' +
+        '<td>'+esc(t.branch || '-')+'</td>' +
+        '<td>'+esc(t.name)+'</td>' +
+        '<td style="font-family:monospace">'+esc(t.login_code)+'</td>' +
+        '<td>'+roleLabel+'</td>' +
+      '</tr>';
+    }).join('');
+    document.getElementById('teacherListBody').innerHTML = rows;
   }
 
   function renderStats(stats){
@@ -163,6 +188,9 @@
     btn.disabled = true;
     btn.textContent = '확인 중...';
     try {
+      var teacherRes = await sb.rpc('get_admin_teacher_list', { p_admin_code: code });
+      if (teacherRes.error) throw teacherRes.error;
+
       var statsRes = await sb.rpc('get_admin_stats', { p_admin_code: code });
       if (statsRes.error) throw statsRes.error;
 
@@ -172,6 +200,7 @@
       document.getElementById('gate').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
 
+      renderTeacherList(teacherRes.data || []);
       renderStats(statsRes.data || []);
       renderSummary(statsRes.data || []);
       allDetails = detailRes.data || [];
