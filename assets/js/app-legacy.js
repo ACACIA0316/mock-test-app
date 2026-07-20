@@ -5541,7 +5541,7 @@ const SUBJ_TYPES = [
   {type:'restatement_blank', label:'재진술 빈칸형', cls:'subj', rw:[130,999], tip:'핵심 문장을 재진술한 문장의 빈칸을 채우는 주관식'},
   {type:'word_order_blank',  label:'어순배열형',    cls:'wo',   rw:[130,999], tip:'주어진 어구를 올바른 순서로 배열하는 주관식'},
   {type:'new_order_blank',   label:'New 어순배열형', cls:'wo',   rw:[130,999], tip:'원문 변형(P/P-1/S/D형) 빈칸 문장을 어순배열로 출제하는 주관식'},
-  {type:'understanding_sm',  label:'핵심내용형(SM)', cls:'subj', rw:[130,999], tip:'핵심내용형(SM)은 지문 핵심 논리를 한국어로 압축 서술하는 유형입니다. A형=개념 발생/추상화, B형=착각·문제 원인과 해결 효과, C형=개인 경험 후 심리 변화, D형=계기·이유 복수 근거, E형=이론과 사례 적용, F형=매체·사건 후 인식/제도 변화, G형=특정 이유 문장 추출, H형=구체적 사건 해석, I형=갈등·불일치 메커니즘을 묻습니다.'},
+  {type:'understanding_sm',  label:'핵심내용형(SM)', cls:'subj', rw:[130,999], tip:'지문 핵심 논리를 한국어로 압축설명하는 유형입니다.'},
 ];
 const ALL_TYPES = [...GRAMMAR_TYPES, ...OBJ_TYPES, ...SUBJ_TYPES];
 const SUBJ_SET  = new Set(['summary_blank','restatement_blank','word_order_blank','understanding_sm','new_order_blank','어법수정','어법수정(DC)','어법재작성','어법배열','어법구문영작','어법어형','어법서술']);
@@ -5631,15 +5631,15 @@ const _MAIN_SETTING_TIPS = {
     '자동': '자동: 지문에 가장 잘 맞는 세부 유형을 AI가 선택합니다.',
     '순수 배열형': '순수 배열형: 주어진 어구만 배열해 정답 문장을 완성합니다.',
     '영작 혼합형': '영작 혼합형: 배열과 영작 요소를 함께 요구합니다.',
-    'A형': '핵심내용형 A형: 지문 논리 구조에 맞춰 A 패턴으로 출제합니다.',
-    'B형': '핵심내용형 B형: 지문 논리 구조에 맞춰 B 패턴으로 출제합니다.',
-    'C형': '핵심내용형 C형: 지문 논리 구조에 맞춰 C 패턴으로 출제합니다.',
-    'D형': '핵심내용형 D형: 지문 논리 구조에 맞춰 D 패턴으로 출제합니다.',
-    'E형': '핵심내용형 E형: 지문 논리 구조에 맞춰 E 패턴으로 출제합니다.',
-    'F형': '핵심내용형 F형: 지문 논리 구조에 맞춰 F 패턴으로 출제합니다.',
-    'G형': '핵심내용형 G형: 지문 논리 구조에 맞춰 G 패턴으로 출제합니다.',
-    'H형': '핵심내용형 H형: 지문 논리 구조에 맞춰 H 패턴으로 출제합니다.',
-    'I형': '핵심내용형 I형: 지문 논리 구조에 맞춰 I 패턴으로 출제합니다.'
+    'A형': 'A형(개념 발생/추상화): 지문이 어떤 개념이나 관점을 새로 정의하거나, 구체 사례에서 추상적 원리를 끌어낼 때 사용합니다. 학생은 "이 글이 말하는 핵심 개념/의미가 무엇인가"를 압축 서술합니다.',
+    'B형': 'B형(착각/문제 원인 + 해결 효과): 사람들이 잘못 이해한 원인, 그 착각이 생긴 방식, 이를 바로잡는 해결책이나 효과가 글의 중심일 때 사용합니다. 학생은 "무엇을 왜 착각했고, 어떻게 교정되는가"를 설명합니다.',
+    'C형': 'C형(개인 경험 후 심리 변화): 개인의 경험이나 만남 이후 생각·감정·태도가 변화하는 과정이 중심일 때 사용합니다. 학생은 "어떤 경험이 어떤 심리 변화로 이어졌는가"를 설명합니다.',
+    'D형': 'D형(계기/이유 복수 근거): 어떤 행동·선택·판단이 여러 이유나 계기에 의해 정당화될 때 사용합니다. 학생은 "왜 그렇게 하게 되었는가"를 핵심 근거 중심으로 정리합니다.',
+    'E형': 'E형(이론과 사례 적용): 일반 이론·원리·개념을 제시한 뒤 구체 사례에 적용하는 구조일 때 사용합니다. 학생은 "어떤 이론이 어떤 사례에 어떻게 적용되는가"를 설명합니다.',
+    'F형': 'F형(매체/사건 후 인식·제도 변화): 특정 매체, 사건, 기술, 제도 변화 이후 사람들의 인식이나 사회적 체계가 달라지는 내용일 때 사용합니다. 학생은 "무엇이 계기가 되어 어떤 변화가 생겼는가"를 설명합니다.',
+    'G형': 'G형(특정 이유 문장 추출): 지문 속 특정 행동·현상·판단의 이유를 직접 설명하는 핵심 문장을 찾는 유형입니다. 학생은 "왜 그런가"에 해당하는 문장을 압축해 제시합니다.',
+    'H형': 'H형(구체적 사건 해석): 구체적인 사건·일화·사례가 실제로 의미하는 바를 해석해야 할 때 사용합니다. 학생은 "이 사건이 어떤 의미를 보여 주는가"를 설명합니다.',
+    'I형': 'I형(갈등/불일치 메커니즘): 두 집단의 반응 차이, 기대와 결과의 불일치, 지식 격차, 비율 차이가 핵심일 때 사용합니다. 학생은 "무엇이 서로 어긋나며, 그 차이가 어떤 현상을 만드는가"를 설명합니다.'
   },
   variant: {
     '자동': '자동: New 어순배열에 가장 적합한 변형 유형을 AI가 선택합니다.',
@@ -11156,8 +11156,21 @@ function _lgRenderResultCard(p, idx, rp, tid, instLabel) {
   var cq   = (result && result.contentQuestions)  || [];
   var aq   = (result && result.advancedQuestions) || [];
 
-  /* ── 내용 확인 ── */
   html += '</div>';
+
+  if (result) {
+    var passageForLogic = result.passageText || p.text || '';
+    if (passageForLogic) {
+      html +=
+        '<div style="padding:4px 16px 10px">' +
+          '<div style="font-size:10px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">지문</div>' +
+          '<div class="tr-passage-display">' + escH(passageForLogic) + '</div>' +
+        '</div>' +
+        '<div style="padding:0 16px 8px;font-size:11px;color:#374151">다음 글을 읽고 물음에 답하세요.</div>';
+    }
+  }
+
+  /* ── 내용 확인 ── */
   if (cq.length > 0) {
     html += '<div class="lg-section-hd">✅ 내용 확인 문제 · ' + cq.length + '문항</div>';
     cq.forEach(function(q) {
@@ -11239,6 +11252,8 @@ function _trBuildLogicHtml(pid, tid) {
     'h2{font-size:13pt;border-bottom:2px solid #111;padding-bottom:5px;margin-bottom:14px}' +
     'h3{font-size:11pt;color:#1D4ED8;margin:18px 0 8px}' +
     '.structure{display:inline-block;padding:3px 12px;border-radius:99px;background:#EFF6FF;color:#1D4ED8;font-size:10pt;border:1px solid #BFDBFE;margin-bottom:14px}' +
+    '.passage{font-size:11pt;line-height:2;margin-bottom:14px;padding:12px 14px;border:1px solid #ccc;background:#fafafa;white-space:pre-wrap}' +
+    '.instruction{font-size:10pt;color:#444;margin-bottom:16px}' +
     '.q-item{margin-bottom:18px;padding:10px 14px;border:1px solid #ccc;border-radius:4px}' +
     '.q-num{font-weight:bold;font-size:11pt;margin-bottom:6px}' +
     '.q-type{display:inline-block;font-size:9pt;padding:2px 8px;border-radius:99px;background:#F5F3FF;color:#6D28D9;border:1px solid #DDD6FE;margin-left:6px}' +
@@ -11251,6 +11266,8 @@ function _trBuildLogicHtml(pid, tid) {
   var body = '<h2>지문이해 · 지문 ' + pidx + '</h2>';
   body += _trMetaHtml(pid, tid);
   if (result.passageStructure) body += '<div class="structure">📐 ' + escH(result.passageStructure) + '</div>';
+  body += '<div class="passage">' + escH(result.passageText || p.text || '') + '</div>';
+  body += '<div class="instruction">다음 글을 읽고 물음에 답하세요.</div>';
   if (cq.length > 0) {
     body += '<h3>✅ 내용 확인 문제</h3>';
     cq.forEach(function(q) {
