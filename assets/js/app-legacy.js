@@ -5965,6 +5965,7 @@ function saveApiKey() {
   document.getElementById('api-key-input').value = '';
   _refreshAllKeyStatus();
   showToast('Claude API 키 저장됨');
+  _reanalyzeSelectedPassage();
 }
 function clearApiKey() {
   localStorage.removeItem('mp_key');
@@ -7664,6 +7665,14 @@ function _pdfSubjectiveBlankIds(q, bodyText) {
     for (var i = 0; i < count; i++) ids.push(String.fromCharCode(65 + i));
   }
   return ids;
+}
+
+function _reanalyzeSelectedPassage() {
+  const p = passages.find(x => x.id === selectedId);
+  if (!p || countWords(p.text) < 60) return;
+  p.aiScores = null;
+  clearTimeout(p._at);
+  p._at = setTimeout(() => analyzeWithAI(p.text, p), 100);
 }
 
 function _pdfSubjectiveAnswerArea(q, bodyText) {
