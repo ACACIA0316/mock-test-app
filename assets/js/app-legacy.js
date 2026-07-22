@@ -2243,6 +2243,7 @@ var _GRAMMAR_DC_DESIGN_MODEL_ID = 'claude-sonnet-5';
 var _PRICING = {
   'claude-sonnet-5':         { input:  3.00, output: 15.00 },
   'claude-sonnet-4-6':       { input:  3.00, output: 15.00 },
+  'gemini-3.1-pro-preview':  { input:  2.00, output: 12.00 },
   'gemini-3.6-flash':        { input:  1.50, output:  7.50 },
   'gemini-3.5-flash':        { input:  1.50, output:  9.00 },
   'gemini-3.5-flash-lite':   { input:  0.30, output:  2.50 },
@@ -2308,14 +2309,12 @@ function _detectProvider(modelId) {
   if (m.startsWith('gemini')) return { type: 'gemini', model: m };
   if (m.startsWith('gpt') || m.startsWith('o1') || m.startsWith('o3') || m.startsWith('o4')) return { type: 'openai', model: m };
   if (m.startsWith('deepseek')) return { type: 'deepseek', model: m };
-  if (m.indexOf('fable') !== -1) return { type: 'fable', model: m };
   return { type: 'claude', model: m };
 }
 
 const getGeminiKey  = () => localStorage.getItem('mp_gemini_key')  || '';
 const getOpenAIKey  = () => localStorage.getItem('mp_openai_key')  || '';
 const getDeepSeekKey = () => localStorage.getItem('mp_deepseek_key') || '';
-const getFableKey   = () => localStorage.getItem('mp_fable_key')   || '';
 
 function saveGeminiKey() {
   const k = document.getElementById('gemini-key-input').value.trim();
@@ -2359,26 +2358,10 @@ function clearDeepSeekKey() {
   _refreshAllKeyStatus();
   showToast('DeepSeek API 키 삭제됨');
 }
-function saveFableKey() {
-  const k = (document.getElementById('fable-key-input') || {}).value || '';
-  if (!k.trim()) { showToast('Fable API 키를 입력해주세요'); return; }
-  localStorage.setItem('mp_fable_key', k.trim());
-  document.getElementById('fable-key-input').value = '';
-  _refreshAllKeyStatus();
-  showToast('Fable API 키 저장됨');
-}
-function clearFableKey() {
-  localStorage.removeItem('mp_fable_key');
-  var el = document.getElementById('fable-key-input'); if (el) el.value = '';
-  _refreshAllKeyStatus();
-  showToast('Fable API 키 삭제됨');
-}
-
 function _providerDisplayName(provider) {
   return provider === 'gemini' ? 'Gemini'
     : provider === 'openai' ? 'OpenAI'
     : provider === 'deepseek' ? 'DeepSeek'
-    : provider === 'fable' ? 'Fable'
     : 'Claude';
 }
 
@@ -2386,7 +2369,6 @@ function _getStoredProviderKey(provider) {
   if (provider === 'gemini') return getGeminiKey();
   if (provider === 'openai') return getOpenAIKey();
   if (provider === 'deepseek') return getDeepSeekKey();
-  if (provider === 'fable') return getFableKey();
   return getKey();
 }
 
@@ -2462,13 +2444,12 @@ async function checkApiConnection(provider, inputId, statusId, btn) {
 
 /* ── 키 상태 전체 갱신 (세 탭 공유) ── */
 function _refreshAllKeyStatus() {
-  var hasC = !!getKey(), hasG = !!getGeminiKey(), hasO = !!getOpenAIKey(), hasD = !!getDeepSeekKey(), hasF = !!getFableKey();
+  var hasC = !!getKey(), hasG = !!getGeminiKey(), hasO = !!getOpenAIKey(), hasD = !!getDeepSeekKey();
   var map = {
     claude:   [hasC, 'api-status',      'tr-api-status',     'syn-c-status'],
     gemini:   [hasG, 'gemini-status',   'tr-gemini-status',  'syn-g-status'],
     openai:   [hasO, 'openai-status',   'tr-openai-status',  'syn-o-status'],
-    deepseek: [hasD, 'deepseek-status', 'tr-deepseek-status','syn-d-status'],
-    fable:    [hasF, 'fable-status']
+    deepseek: [hasD, 'deepseek-status', 'tr-deepseek-status','syn-d-status']
   };
   Object.values(map).forEach(function(arr) {
     var has = arr[0];
@@ -2779,8 +2760,6 @@ async function _callLLM(system, userMsg, modelId, apiKey, onEvent, qType) {
   if (cfg.type === 'gemini') return _callGemini(system, userMsg, cfg.model, onEvent, qType);
   if (cfg.type === 'openai') return _callOpenAI(system, userMsg, cfg.model, onEvent, qType);
   if (cfg.type === 'deepseek') return _callDeepSeek(system, userMsg, cfg.model, onEvent, qType);
-  // fable: Anthropic 호환 (같은 /v1/messages 호스트) — 전용 키 사용, 없으면 Claude 키로 폴백
-  if (cfg.type === 'fable') return _callAPI(system, userMsg, getFableKey() || apiKey, 4, onEvent, qType, cfg.model);
   // claude (default)
   return _callAPI(system, userMsg, apiKey, 4, onEvent, qType, cfg.model);
 }
@@ -7050,40 +7029,29 @@ function makeCfgBlock(type, id) {
     ph = `<div class="p-row"><span class="p-lbl">어휘</span>${vocabBtns('b')}</div>
     <div class="p-row"><span class="p-lbl">오답 매력도</span>${attrBtns(type)}</div>${gistLangRow}`;
   }
-  const pvOptions = `<option value="">전역 설정</option>
+  const pvOptions = `<option value="">&#51204;&#50669; &#49444;&#51221;</option>
     <option value="claude-sonnet-5">Claude Sonnet 5</option>
     <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+    <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro</option>
     <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
-    <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+    <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option>
+    <option value="gpt-5.6-sol">GPT-5.6 Sol</option>
+    <option value="gpt-5.6-terra">GPT-5.6 Terra</option>
+    <option value="gpt-5.6-luna">GPT-5.6 Luna</option>
+    <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
+    <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>`;
+  const proofOptions = `<option value="">&#51204;&#50669; &#49444;&#51221;</option>
+    <option value="claude-sonnet-5">Claude Sonnet 5</option>
+    <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+    <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro</option>
+    <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
     <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option>
     <option value="gpt-5.6-sol">GPT-5.6 Sol</option>
     <option value="gpt-5.6-terra">GPT-5.6 Terra</option>
     <option value="gpt-5.6-luna">GPT-5.6 Luna</option>
     <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
     <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
-    <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-    <option value="gemini-3-flash">Gemini 3 Flash</option>
-    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-    <option value="gpt-4o">GPT-4o</option>
-    <option value="deepseek-reasoner">DeepSeek R1</option>`;
-  const proofOptions = `<option value="">전역 설정</option>
-    <option value="claude-sonnet-5">Claude Sonnet 5</option>
-    <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
-    <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
-    <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
-    <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option>
-    <option value="gpt-5.6-sol">GPT-5.6 Sol</option>
-    <option value="gpt-5.6-terra">GPT-5.6 Terra</option>
-    <option value="gpt-5.6-luna">GPT-5.6 Luna</option>
-    <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
-    <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
-    <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-    <option value="gemini-3-flash">Gemini 3 Flash</option>
-    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-    <option value="gpt-4o">GPT-4o</option>
-    <option value="none">사용 안 함</option>`;
+    <option value="none">&#49324;&#50857; &#50504; &#54632;</option>`;
   const pvRow = `<div class="p-divider"></div>
     <div class="p-row" style="flex-wrap:nowrap;gap:4px">
       <span class="p-lbl" style="min-width:28px">출제</span>
@@ -9626,7 +9594,7 @@ async function _trAPICall(system, userMsg, modelId) {
   } else if (cfg.type === 'openai') {
     raw = await _callOpenAI(system, userMsg, cfg.model, null, 'training');
   } else {
-    var apiKey = (cfg.type === 'fable' && getFableKey()) || getKey();
+    var apiKey = getKey();
     if (!apiKey) throw new Error('Claude API 키가 필요합니다 (문제 출제 탭에서 저장)');
     raw = await _callAPI(system, userMsg, apiKey, 3, null, 'training', cfg.model);
   }
@@ -11696,7 +11664,6 @@ function _synGetKey(modelId) {
   if (cfg.type === 'gemini') return getGeminiKey();
   if (cfg.type === 'openai') return getOpenAIKey();
   if (cfg.type === 'deepseek') return getDeepSeekKey();
-  if (cfg.type === 'fable') return getFableKey() || getKey();
   return getKey();
 }
 
@@ -12041,6 +12008,7 @@ async function synResumeRun() {
 var _SYN_PRICES = {
   'claude-sonnet-5':   { i: 3,     o: 15   },
   'claude-sonnet-4-6': { i: 3,     o: 15   },
+  'gemini-3.1-pro-preview': { i: 2.00, o: 12.00 },
   'gemini-3.6-flash':  { i: 1.50,  o: 7.50 },
   'gemini-3.5-flash':  { i: 1.50,  o: 9.00 },
   'gemini-3.5-flash-lite': { i: 0.30, o: 2.50 },
