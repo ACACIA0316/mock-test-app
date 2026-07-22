@@ -2241,6 +2241,8 @@ var _GRAMMAR_DC_DESIGN_MODEL_ID = 'claude-sonnet-5';
 /* ── 토큰 비용 추적 ─────────────────────────────────────────────── */
 /* 단가: USD / 1M 토큰 (2025년 기준 공식 요금) */
 var _PRICING = {
+  'claude-fable-5':          { input: 10.00, output: 50.00 },
+  'claude-opus-4-8':         { input:  5.00, output: 25.00 },
   'claude-sonnet-5':         { input:  3.00, output: 15.00 },
   'claude-sonnet-4-6':       { input:  3.00, output: 15.00 },
   'gemini-3.1-pro-preview':  { input:  2.00, output: 12.00 },
@@ -12035,6 +12037,8 @@ async function synResumeRun() {
 
 /* ── 모델별 비용 추정 테이블 ($/MTok) ── */
 var _SYN_PRICES = {
+  'claude-fable-5':    { i: 10,    o: 50   },
+  'claude-opus-4-8':   { i: 5,     o: 25   },
   'claude-sonnet-5':   { i: 3,     o: 15   },
   'claude-sonnet-4-6': { i: 3,     o: 15   },
   'gemini-3.1-pro-preview': { i: 2.00, o: 12.00 },
