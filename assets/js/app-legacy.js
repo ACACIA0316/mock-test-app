@@ -2236,18 +2236,23 @@ async function _callAPI(system, userMsg, apiKey, retries, onEvent, qType, claude
   }
 }
 
-var _GRAMMAR_DC_DESIGN_MODEL_ID = 'claude-opus-4-8';
+var _GRAMMAR_DC_DESIGN_MODEL_ID = 'claude-sonnet-5';
 
 /* ── 토큰 비용 추적 ─────────────────────────────────────────────── */
 /* 단가: USD / 1M 토큰 (2025년 기준 공식 요금) */
 var _PRICING = {
+  'claude-sonnet-5':         { input:  3.00, output: 15.00 },
   'claude-sonnet-4-6':       { input:  3.00, output: 15.00 },
-  'claude-opus-4-6':         { input: 15.00, output: 75.00 },
-  'claude-opus-4-8':         { input: 15.00, output: 75.00 },
-  'claude-haiku-4-5-20251001':{ input:  0.80, output:  4.00 },
+  'gemini-3.6-flash':        { input:  1.50, output:  7.50 },
+  'gemini-3.5-flash':        { input:  1.50, output:  9.00 },
+  'gemini-3.5-flash-lite':   { input:  0.30, output:  2.50 },
+  'claude-haiku-4-5-20251001':{ input:  1.00, output:  5.00 },
   'gemini-2.5-pro':          { input:  1.25, output: 10.00 },
   'gemini-3-flash':          { input:  0.50, output:  3.00 },
   'gemini-2.5-flash':        { input:  0.30, output:  2.50 },
+  'gpt-5.6-sol':             { input:  5.00, output: 30.00 },
+  'gpt-5.6-terra':           { input:  2.50, output: 15.00 },
+  'gpt-5.6-luna':            { input:  1.00, output:  6.00 },
   'gpt-4.5':                 { input: 75.00, output:150.00 },
   'gpt-4o':                  { input:  2.50, output: 10.00 },
   'deepseek-chat':            { input:  0.14, output:  0.28 },
@@ -7046,25 +7051,38 @@ function makeCfgBlock(type, id) {
     <div class="p-row"><span class="p-lbl">오답 매력도</span>${attrBtns(type)}</div>${gistLangRow}`;
   }
   const pvOptions = `<option value="">전역 설정</option>
+    <option value="claude-sonnet-5">Claude Sonnet 5</option>
+    <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+    <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
+    <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+    <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option>
+    <option value="gpt-5.6-sol">GPT-5.6 Sol</option>
+    <option value="gpt-5.6-terra">GPT-5.6 Terra</option>
+    <option value="gpt-5.6-luna">GPT-5.6 Luna</option>
+    <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
+    <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
     <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-    <option value="claude-opus-4-8">Claude Opus 4.8</option>
-    <option value="claude-opus-4-6">Claude Opus 4.6</option>
     <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
     <option value="gemini-3-flash">Gemini 3 Flash</option>
     <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
     <option value="gpt-4o">GPT-4o</option>
-    <option value="deepseek-chat">DeepSeek V3</option>
     <option value="deepseek-reasoner">DeepSeek R1</option>`;
   const proofOptions = `<option value="">전역 설정</option>
+    <option value="claude-sonnet-5">Claude Sonnet 5</option>
+    <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+    <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
+    <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+    <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option>
+    <option value="gpt-5.6-sol">GPT-5.6 Sol</option>
+    <option value="gpt-5.6-terra">GPT-5.6 Terra</option>
+    <option value="gpt-5.6-luna">GPT-5.6 Luna</option>
+    <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
+    <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
     <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-    <option value="claude-opus-4-8">Claude Opus 4.8</option>
-    <option value="claude-opus-4-6">Claude Opus 4.6</option>
     <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
     <option value="gemini-3-flash">Gemini 3 Flash</option>
     <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
     <option value="gpt-4o">GPT-4o</option>
-    <option value="deepseek-chat">DeepSeek V3</option>
-    <option value="deepseek-reasoner">DeepSeek R1</option>
     <option value="none">사용 안 함</option>`;
   const pvRow = `<div class="p-divider"></div>
     <div class="p-row" style="flex-wrap:nowrap;gap:4px">
@@ -12021,9 +12039,14 @@ async function synResumeRun() {
 
 /* ── 모델별 비용 추정 테이블 ($/MTok) ── */
 var _SYN_PRICES = {
+  'claude-sonnet-5':   { i: 3,     o: 15   },
   'claude-sonnet-4-6': { i: 3,     o: 15   },
-  'claude-opus-4-6':   { i: 15,    o: 75   },
-  'claude-opus-4-8':   { i: 15,    o: 75   },
+  'gemini-3.6-flash':  { i: 1.50,  o: 7.50 },
+  'gemini-3.5-flash':  { i: 1.50,  o: 9.00 },
+  'gemini-3.5-flash-lite': { i: 0.30, o: 2.50 },
+  'gpt-5.6-sol':       { i: 5.00,  o: 30.00 },
+  'gpt-5.6-terra':     { i: 2.50,  o: 15.00 },
+  'gpt-5.6-luna':      { i: 1.00,  o: 6.00 },
   'gemini-2.5-pro':    { i: 1.25,  o: 10   },
   'gemini-3-flash':    { i: 0.50,  o: 3.00 },
   'gemini-2.5-flash':  { i: 0.30,  o: 2.50 },
