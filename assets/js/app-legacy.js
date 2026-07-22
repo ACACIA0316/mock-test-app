@@ -7644,6 +7644,34 @@ function _pdfExplanationText(q) {
   return parts.filter(Boolean).join('\n\n');
 }
 
+function _pdfSubjectiveBlankIds(q, bodyText) {
+  var ids = [];
+  if (q && Array.isArray(q.blanks)) {
+    q.blanks.forEach(function(blank) {
+      var id = blank && blank.id != null ? String(blank.id).replace(/[()]/g, '') : '';
+      if (id && ids.indexOf(id) === -1) ids.push(id);
+    });
+  }
+  var markerRe = /[(]([A-Z])[)]/g;
+  var markerMatch;
+  while ((markerMatch = markerRe.exec(String(bodyText || ''))) !== null) {
+    if (ids.indexOf(markerMatch[1]) === -1) ids.push(markerMatch[1]);
+  }
+  if (!ids.length) {
+    var count = Number(q && q.params && (q.params.blank_count || q.params.blankCount)) || 0;
+    for (var i = 0; i < count; i++) ids.push(String.fromCharCode(65 + i));
+  }
+  return ids;
+}
+
+function _pdfSubjectiveAnswerArea(q, bodyText) {
+  var ids = _pdfSubjectiveBlankIds(q, bodyText);
+  if (!ids.length) return '';
+  return '<div class="write-area"><div class="write-title">&#45813;&#50504; &#51089;&#49457;</div>' +
+    ids.map(function(id) {
+      return '<div class="write-row"><span class="write-label">(' + _pdfEscape(id) + ')</span><span class="write-line"></span></div>';
+    }).join('') + '</div>';
+}
 function _pdfProblemHtml(r, idx) {
   var q = _pdfResolveQuestion(r.question);
   var type = r.qType || r.type || q.type || '';
@@ -7667,6 +7695,7 @@ function _pdfProblemHtml(r, idx) {
     _pdfBogiRows(q) +
     _pdfWordList(q) +
     _pdfChoiceRows(q) +
+    ((type === 'summary_blank' || type === 'restatement_blank') ? _pdfSubjectiveAnswerArea(q, bodyText) : '') +
   '</section>';
 }
 
@@ -7696,8 +7725,8 @@ function _buildPdfDocumentHtml(title, results) {
     '.passage{font-family:"Times New Roman","Malgun Gothic",serif;background:#f7f7f7;border:1px solid #e5e7eb;padding:10px 12px;margin:8px 0 10px;white-space:normal}' +
     '.stem{font-weight:700;margin:6px 0 8px}.subhead{font-weight:700;margin:10px 0 4px}.wordbank{border:1px solid #d1d5db;padding:8px;margin:6px 0 10px}' +
     'ol{margin:6px 0 10px 24px;padding:0}.choices li,.bogi li{margin:5px 0}.problem{break-inside:avoid;page-break-inside:avoid;margin-bottom:14px}' +
-    '.answers-start{break-before:page;page-break-before:always}.answer{break-inside:avoid;page-break-inside:avoid;border-bottom:1px solid #e5e7eb;padding-bottom:10px;margin-bottom:8px}' +
-    '.answer-key{font-weight:800;color:#b91c1c;margin:4px 0 6px}.explanation{color:#166534;white-space:pre-wrap}' +
+    '.answers-start{break-before:page;page-break-before:always}.answer{break-inside:auto;page-break-inside:auto;border-bottom:1px solid #e5e7eb;padding-bottom:7px;margin-bottom:6px}.answer h2{break-after:avoid;page-break-after:avoid}' +
+    '.answer-key{font-weight:800;color:#b91c1c;margin:4px 0 6px}.explanation{color:#166534;white-space:pre-wrap}.write-area{border:1px solid #9ca3af;padding:9px 12px;margin:12px 0 4px;break-inside:avoid;page-break-inside:avoid}.write-title{font-weight:700;margin-bottom:6px}.write-row{display:flex;align-items:flex-end;gap:8px;margin:7px 0}.write-label{font-weight:700;min-width:28px}.write-line{display:block;flex:1;border-bottom:1px solid #374151;height:16px}' +
     '.print-note{display:none}@media screen{body{max-width:900px;margin:24px auto;padding:0 20px}.print-note{display:block;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;padding:10px 12px;border-radius:8px;margin:0 0 16px}.actions{display:flex;gap:8px;justify-content:center;margin-bottom:16px}.actions button{padding:9px 16px;border:0;border-radius:8px;background:#111827;color:#fff;cursor:pointer}}' +
     '@media print{.print-note,.actions{display:none}}' +
     '</style></head><body>' +
