@@ -74,12 +74,27 @@
     el.scrollTop = el.scrollHeight;
   }
   function extractJson(text) {
-    var s = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-    try { return JSON.parse(s); } catch(e) {}
+    var s = String(text || '').replace(/^\uFEFF/, '').trim();
+    var parsed = null;
+    if (typeof window._safeParseJSON === 'function') parsed = window._safeParseJSON(s);
+    if (!parsed && typeof window._extractJson === 'function') parsed = window._extractJson(s);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+
+    var candidates = [s];
+    var fenceRe = /```(?:json)?\s*([\s\S]*?)\s*```/gi;
+    var match;
+    while ((match = fenceRe.exec(s)) !== null) candidates.push(match[1].trim());
     var start = s.indexOf('{');
     var end = s.lastIndexOf('}');
-    if (start >= 0 && end > start) return JSON.parse(s.slice(start, end + 1));
-    throw new Error('JSON 객체를 찾지 못했습니다.');
+    if (start >= 0 && end > start) candidates.push(s.slice(start, end + 1));
+    for (var i = 0; i < candidates.length; i++) {
+      try {
+        parsed = JSON.parse(candidates[i]);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+      } catch(e) {}
+    }
+    var preview = s.replace(/\s+/g, ' ').slice(0, 180);
+    throw new Error('JSON 파싱 실패' + (preview ? ': ' + preview : ' (빈 응답)'));
   }
   function getKeyForModel(modelId) {
     var cfg = window._detectProvider ? _detectProvider(modelId) : { type: 'claude' };
@@ -175,7 +190,64 @@
     if (!window._callLLM) throw new Error('공통 AI 호출 함수(_callLLM)를 찾지 못했습니다.');
     var key = getKeyForModel(modelId);
     if (!key) throw new Error(modelId + ' API 키가 없습니다.');
+    var cfg = window._detectProvider ? _detectProvider(modelId) : { type: 'claude', model: modelId };
+    if (cfg.type === 'claude') return callClaudeBlueprint(system, userMsg, cfg.model, key);
     return _callLLM(system, userMsg, modelId, key, null, 'blueprint');
+  }
+  async function callClaudeBlueprint(system, userMsg, modelId, key) {
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: modelId,
+        max_tokens: 32000,
+        system: system,
+        messages: [{ role: 'user', content: userMsg }]
+      })
+    });
+    if (!response.ok) {
+      var errorBody = await response.json().catch(function() { return {}; });
+      throw new Error((errorBody.error && errorBody.error.message) || ('Claude HTTP ' + response.status));
+    }
+    var data = await response.json();
+    if (data.usage && typeof window._addTokens === 'function') {
+      window._addTokens(modelId, data.usage.input_tokens || 0, data.usage.output_tokens || 0);
+    }
+    if (data.stop_reason === 'max_tokens') {
+      throw new Error('Claude 응답이 최대 출력 토큰에서 잘렸습니다.');
+    }
+    var text = Array.isArray(data.content) ? data.content.filter(function(block) {
+      return block && block.type === 'text';
+    }).map(function(block) {
+      return block.text || '';
+    }).join('') : '';
+    if (!text.trim()) throw new Error('Claude가 빈 텍스트 응답을 반환했습니다.');
+    return text;
+  }
+  async function requestBlueprintJson(system, userMsg, modelId) {
+    var lastError = null;
+    for (var attempt = 1; attempt <= 2; attempt++) {
+      try {
+        var retryInstruction = attempt === 1 ? '' : [
+          '',
+          '[재요청]',
+          '직전 응답은 완전한 JSON 객체가 아니어서 처리할 수 없었습니다.',
+          '설명과 코드 펜스를 빼고 JSON 문법을 지켜 닫는 괄호까지 완성하세요.',
+          '내용이 길다면 각 설명을 간결하게 줄이되 필수 키는 유지하세요.'
+        ].join('\n');
+        var raw = await callBlueprint(system, userMsg + retryInstruction, modelId);
+        return extractJson(raw);
+      } catch(e) {
+        lastError = e;
+        if (attempt < 2) log(modelId + ' JSON 자동 복구 재시도 중');
+      }
+    }
+    throw new Error('자동 복구 후에도 ' + (lastError && lastError.message ? lastError.message : 'JSON 처리에 실패했습니다.'));
   }
   function buildUserMsg(reference, passage, mode) {
     return '참조 정보: ' + (reference || '(없음)') + '\n\n[영어 지문]\n' + passage + '\n\n작업: ' + mode + '\n반드시 단일 JSON 객체로 반환하세요.';
@@ -333,8 +405,7 @@
       var st = Date.now();
       try {
         log(modelId + ' 호출 중');
-        var raw = await callBlueprint(BP_ANALYSIS_PROMPT, userMsg, modelId);
-        var data = extractJson(raw);
+        var data = await requestBlueprintJson(BP_ANALYSIS_PROMPT, userMsg, modelId);
         bpAnalysisResults.push({ model: modelId, data: data, reference: reference, elapsed: fmtTime((Date.now() - st) / 1000) });
         log(modelId + ' 완료');
       } catch(e) {
@@ -374,8 +445,8 @@
       var st = Date.now();
       try {
         log(modelId + ' 워크북 호출 중');
-        var raw = await callBlueprint(BP_WORKBOOK_PROMPT, userMsg, modelId);
-        bpWorkbookResults.push({ model: modelId, data: extractJson(raw), elapsed: fmtTime((Date.now() - st) / 1000) });
+        var data = await requestBlueprintJson(BP_WORKBOOK_PROMPT, userMsg, modelId);
+        bpWorkbookResults.push({ model: modelId, data: data, elapsed: fmtTime((Date.now() - st) / 1000) });
         log(modelId + ' 워크북 완료');
       } catch(e) {
         bpWorkbookResults.push({ model: modelId, error: e.message, elapsed: fmtTime((Date.now() - st) / 1000) });
